@@ -1,0 +1,148 @@
+---
+title: "`modsem`: An R Package for Estimating Latent Interactions and Quadratic Effects"
+author: "Kjell S Slupphaug"
+format: beamer 
+bibliography: references.bib
+---
+
+
+```{r, setup, echo = FALSE, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+
+library(modsem)
+library(lavaan)
+library(semTools)
+
+# Overload lavaan objects and modsem objects
+sem <- function(...) {
+  out <- list(result = lavaan::sem(...))
+  class(out) <- "presentation_result"
+  out
+}
+
+modsem <- function(...) {
+  out <- list(result = modsem::modsem(...))
+  class(out) <- "presentation_result"
+  out
+}
+
+# Get pretty output
+summary.presentation_result <- function(object, ...) {
+  lines <- capture.output(summary(object$result, ...))
+
+  breaks <- which(grepl("^\\s*$", lines))
+  start  <- which(grepl("Regressions:", lines))
+  end    <- min(breaks[breaks > start]) - 1L
+
+  cat(lines[start:end], sep = "\n")
+}
+```
+
+
+## `modsem`
+
+- `modsem` is an `R` package for estimating latent interaction and quadratic effects, in *Structural Equation Models* (SEMs).
+
+## Frameworks
+
+- Product Indicator (PI) approaches
+- Distribution Analytic (DA) approaches
+
+# Product Indicator (PI) Approaches
+## Product Indicator (PI) Approaches
+
+- First attempt at latent interaction in SEMs [@kenny_estimating_1984]
+- Creates product indicators, used as indicators for latent interaction terms.
+- Has traditionally required manual model specification, and manual construction
+  of product indicators.
+- Early approaches involved complicated model constraints.
+- Manual specification (partially) led to a continual simplification of constraints.
+
+## Product Indicator (PI) Approaches (History)
+
+- Constrained Approach (orthogonal specification) [@kenny_estimating_1984]
+- Constrained Approach (oblique specification) [@joreskog_nonlinear_1996]
+- Constrained Approach (mean-centered indicators) [@algina_note_2001]
+- Unconstrained Approach (constrained latent mean) [@martin_effect_1999]
+- Resdiual Centering Approach (no constraints) [@little_merits_2006]
+- Double Centering Approach (no constraints) [@lin_structural_2010]
+
+## Product Indicator (PI) Approaches (Tools)
+
+- `semTools` offers tools for creating the product indicators, but does not help
+  specify the model.
+- Thus the PI approaches largely require manual specification.
+- `modsem` automatically handles the creation of product indicators, and model
+  specification.
+- Model specification becomes exponentially more complicated for models with more
+  indicators, more interaction terms. Especially for the PI approaches with model
+  constraints.
+
+## Example: Double Centering Approach, using `semTools`
+\scriptsize
+
+```{r}
+model <- '
+# Measurement Model
+  X  =~ x1 + x2 + x3
+  Z  =~ z1 + z2 + z3
+  Y  =~ y1 + y2 + y3
+  XZ =~ x1.z1 + x2.z1 + x3.z1 +
+        x1.z2 + x2.z2 + x3.z2 +
+        x1.z3 + x2.z3 + x3.z3
+
+# Structural Model
+  Y ~ X + Z + XZ
+
+# Residual Covariances
+  x1.z1 ~~ x1.z2 + x1.z3 + x2.z1 + x3.z1
+  x1.z2 ~~ x1.z3 + x2.z2 + x3.z2
+  x2.z1 ~~ x2.z2 + x2.z3 + x3.z1
+  
+  x1.z3 ~~ x2.z3 + x3.z3
+  x2.z2 ~~ x2.z3 + x3.z2
+  x3.z1 ~~ x3.z2 + x3.z3
+  
+  x2.z3 ~~ x3.z3
+  x3.z2 ~~ x3.z3
+'
+```
+\normalsize
+
+## Example: Double Centering Approach, using `semTools`
+
+\scriptsize
+```{r}
+library(semTools)
+data.prod <- indProd(data = oneInt,
+                     var1 = c("x1", "x2", "x3"),
+                     var2 = c("z1", "z2", "z3"),
+                     match = FALSE)
+
+fit <- sem(model, data = data.prod)
+summary(fit)
+```
+\normalsize
+
+## Example: Double Centering Approach, using `modsem`
+
+\scriptsize
+```{r}
+library(modsem)
+
+model <- '
+# Measurement Model
+  X  =~ x1 + x2 + x3
+  Z  =~ z1 + z2 + z3
+  Y  =~ y1 + y2 + y3
+
+# Structural Model
+  Y ~ X + Z + X:Z
+'
+
+fit <- modsem(model, data = oneInt)
+summary(fit)
+```
+\normalsize
+
+## References
