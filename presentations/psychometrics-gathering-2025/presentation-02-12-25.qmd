@@ -1,7 +1,11 @@
 ---
 title: "`modsem`: An R Package for Estimating Latent Interactions and Quadratic Effects"
 author: "Kjell S Slupphaug"
-format: beamer 
+format:
+  beamer:
+    mathspec: true
+    header-includes:
+          - \usepackage{bm}
 bibliography: references.bib
 ---
 
@@ -13,6 +17,7 @@ library(modsem)
 library(lavaan)
 library(semTools)
 
+
 # Overload lavaan objects and modsem objects
 sem <- function(...) {
   out <- list(result = lavaan::sem(...))
@@ -20,22 +25,26 @@ sem <- function(...) {
   out
 }
 
+
 modsem <- function(...) {
   out <- list(result = modsem::modsem(...))
   class(out) <- "presentation_result"
   out
 }
 
+
 # Get pretty output
 summary.presentation_result <- function(object, ...) {
   lines <- capture.output(summary(object$result, ...))
 
+  cat("Truncated Output:\n")
   breaks <- which(grepl("^\\s*$", lines))
   start  <- which(grepl("Regressions:", lines))
   end    <- min(breaks[breaks > start]) - 1L
 
   cat(lines[start:end], sep = "\n")
 }
+
 
 plot_interaction <- function(model, ...) {
   modsem::plot_interaction(model = model$result, ...) 
@@ -49,6 +58,14 @@ plot_jn <- function(model, ...) {
 
 plot_surface <- function(model, ...) {
   modsem::plot_surface(model$result, ...) 
+}
+
+
+summary.emEst <- function(model) {
+  tbl <- nlsem:::summary.emEst(model)$estimates
+  idx <- rownames(tbl)
+  cat("Truncated Output:\n")
+  print(tbl[grepl("Gamma|Omega", idx), ])
 }
 ```
 
@@ -81,7 +98,7 @@ plot_surface <- function(model, ...) {
 - Resdiual Centering Approach (no constraints) [@little_merits_2006]
 - Double Centering Approach (no constraints) [@lin_structural_2010]
 
-## Product Indicator (PI) Approaches (Tools)
+## Product Indicator (PI) Approaches (Software)
 
 - `semTools` offers tools for creating the product indicators, but does not help
   specify the model.
@@ -146,9 +163,9 @@ library(modsem)
 
 model <- '
 # Measurement Model
-  X  =~ x1 + x2 + x3
-  Z  =~ z1 + z2 + z3
-  Y  =~ y1 + y2 + y3
+  X =~ x1 + x2 + x3
+  Z =~ z1 + z2 + z3
+  Y =~ y1 + y2 + y3
 
 # Structural Model
   Y ~ X + Z + X:Z
@@ -158,6 +175,135 @@ fit <- modsem(model, data = oneInt)
 summary(fit)
 ```
 \normalsize
+
+
+# Distribution Analytic (DA) Approaches
+## Distribution Analytic (DA) Approaches
+
+- Latent Moderated Structural Equations (LMS) Method, introduced by [@klein_maximum_2000].
+- Quasi Maximum Likelihood (QML) Method, introducted by [@klein_quasi-maximum_2007].
+- No formation of product indicators.
+- Non-normal distribution of $\mathbf{\eta}$ is explicityly modelled.
+- LMS and QML perform very similarily. But QML performs slightly better under
+  normality violations.
+- QML is less computationally intensive, with multiple moderators.
+
+## Distribution Analytic (DA) Approaches (Software)
+
+- `R` package `nlsem`.
+- `Mplus`
+- `modsem`
+
+## `nlsem`
+
+- Pros:
+    - Free open source `R` package.
+    - Has both LMS and QML approaches.
+
+- Cons:
+    - Very slow
+    - Hard to use
+    - Only handles models with a single endogenous variable ($\eta$).
+    - Doesn't handle missing data
+    - Biased LMS standard errors
+    - Unstable estimates
+    - Cannot produce standardized estimates
+    - Virtually no fit measures
+    - Does not handle linear and nonlinear constraints.
+    - Generally unpolished
+
+## `Mplus`
+
+- Pros:
+    - Extended implementation of LMS approach (multiple endogenous variables, endogenous interactions)
+    - Integrates well with other `Mplus` features (e.g., Multilevel SEM)
+    - Handles three-way interaction terms
+    - Handles higher order models (and interactions)
+    - Easy to use
+    - Full Information Maximum Likelihood (FIML) estimation.
+    - Linear and nonlinear constraints.
+
+- Cons:
+    - Scales poorly with multiple interaction effects
+    - Does not include QML
+    - Proprietary (expensive) software package.
+    - No Multigroup LMS.
+
+## `modsem`
+
+- Pros:
+    - Free open source `R` package.
+    - Extended implementation of LMS and QML approach (multiple endogenous variables, endogenous interactions).
+    - Computational optimized implementation of LMS and QML approaches.
+    - Better scaling in LMS approach, compared to `Mplus`.
+    - Handles higher order models (and interactions)
+    - Easy to use
+    - Full Information Maximum Likelihood (FIML) estimation.
+    - Multigroup LMS and QML.
+    - Linear and nonlinear constraints.
+- Cons:
+    - Missing some advanced features available in `Mplus` (e.g., Multilevel SEM).
+
+## Example: LMS approach, using `nlsem` (213.2 seconds)
+\scriptsize
+```{r}
+set.seed(3248927)
+library(nlsem)
+
+model <- "
+# Outer Model
+  X =~ x1 + x2 + x3
+  Z =~ z1 + z2 + z3
+  Y =~ y1 + y2 + y3
+# Inner Model
+  Y ~ X + Z + X:Z
+"
+
+nlsem_model_1 <- lav2nlsem(model)
+oneIntSorted <- oneInt[c("x1", "x2", "x3", "z1", "z2", "z3", "y1", "y2", "y3")]
+start <- runif(count_free_parameters(nlsem_model_1))
+
+specs <- as.data.frame(nlsem_model_1)
+specs[grepl("tau|alpha", specs$label), "class1"] <- 0
+specs[grepl("nu\\.(x|y)", specs$label), "class1"] <- NA
+
+nlsem_model_2 <- create_sem(specs)
+
+fit_nlsem <- em(nlsem_model_1, data = oneIntSorted, 
+                convergence = 1e-4, max.iter = 1L, start = start)
+```
+\normalsize
+
+
+## Example: LMS approach, using `nlsem` (213.2 seconds)
+
+\scriptsize
+```{r}
+summary(fit_nlsem)
+```
+\normalsize
+
+## Example: LMS approach, using `modsem` (1.2 seconds)
+
+\scriptsize
+```{r}
+model <- '
+# Measurement Model
+  X  =~ x1 + x2 + x3
+  Z  =~ z1 + z2 + z3
+  Y  =~ y1 + y2 + y3
+
+# Structural Model
+  Y ~ X + Z + X:Z
+'
+
+fit <- modsem(model, data = oneInt, method = "lms")
+summary(fit)
+```
+\normalsize
+
+
+
 
 # Visualizing Interaction Effects
 
@@ -302,4 +448,6 @@ plot_surface(x = "X", z = "Z", y = "Y", model = fit,
 ![](images/surface-plot-2.png){width=80%}
 \normalsize
 
+\tinysize
 ## References
+
