@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo=TRUE)
 library(modsem)
 library(lavaan)
 library(semTools)
-
+library(nlsem)
 
 # Overload lavaan objects and modsem objects
 sem <- function(...) {
@@ -247,20 +247,20 @@ summary(fit)
 ## Example: LMS approach, using `nlsem` (213.2 seconds)
 \scriptsize
 ```{r}
-set.seed(3248927)
 library(nlsem)
+set.seed(3248927)
 
 model <- "
-# Outer Model
   X =~ x1 + x2 + x3
   Z =~ z1 + z2 + z3
   Y =~ y1 + y2 + y3
-# Inner Model
+
   Y ~ X + Z + X:Z
 "
 
 nlsem_model_1 <- lav2nlsem(model)
-oneIntSorted <- oneInt[c("x1", "x2", "x3", "z1", "z2", "z3", "y1", "y2", "y3")]
+oneIntSorted <- oneInt[c("x1", "x2", "x3", "z1", "z2",
+                         "z3", "y1", "y2", "y3")]
 start <- runif(count_free_parameters(nlsem_model_1))
 
 specs <- as.data.frame(nlsem_model_1)
@@ -269,8 +269,8 @@ specs[grepl("nu\\.(x|y)", specs$label), "class1"] <- NA
 
 nlsem_model_2 <- create_sem(specs)
 
-fit_nlsem <- em(nlsem_model_1, data = oneIntSorted, 
-                convergence = 1e-4, max.iter = 1L, start = start)
+fit_nlsem <- em(nlsem_model_2, data = oneIntSorted, 
+                convergence = 1e-4, max.iter = 500, start = start)
 ```
 \normalsize
 
@@ -280,6 +280,25 @@ fit_nlsem <- em(nlsem_model_1, data = oneIntSorted,
 \scriptsize
 ```{r}
 summary(fit_nlsem)
+```
+\
+
+## Example: LMS approach, using `Mplus` (6.2 seconds)
+
+\scriptsize
+```{r}
+model <- '
+# Measurement Model
+  X  =~ x1 + x2 + x3
+  Z  =~ z1 + z2 + z3
+  Y  =~ y1 + y2 + y3
+
+# Structural Model
+  Y ~ X + Z + X:Z
+'
+
+fit <- modsem(model, data = oneInt, method = "mplus")
+summary(fit)
 ```
 \normalsize
 
@@ -448,6 +467,6 @@ plot_surface(x = "X", z = "Z", y = "Y", model = fit,
 ![](images/surface-plot-2.png){width=80%}
 \normalsize
 
-\tinysize
+\tiny
 ## References
 
