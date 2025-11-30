@@ -26,8 +26,23 @@ sem <- function(...) {
 }
 
 
-modsem <- function(...) {
-  out <- list(result = modsem::modsem(...))
+modsem <- function(model.syntax, data, method = "dblcent", ...) {
+  mp <- tryCatch(MplusAutomation::detectMplus(), error = \(e) "none")
+  
+  if (tolower(mp) != "mplus" && tolower(method) == "mplus") {
+    # If we don't have Mplus, or we only have the demo version
+    # we switch to the LMS approach. For all the examples in this
+    # presentation, both the LMS approach in modsem, and the LMS
+    # approach in Mplus, yield the same results (within 3 decimal points).
+    # So while this is not kosher, it doesn't change the presentation
+    # and allows the presentation to be compiled even if you don't have
+    # the full version of Mplus.
+    method <- "lms"
+  }
+
+
+  out <- list(result = modsem::modsem(model.syntax = model.syntax, data = data,
+                                      method = method, ...))
   class(out) <- "presentation_result"
   out
 }
@@ -269,7 +284,7 @@ specs[grepl("nu\\.(x|y)", specs$label), "class1"] <- NA
 
 nlsem_model_2 <- create_sem(specs)
 
-fit_nlsem <- em(nlsem_model_2, data = oneIntSorted, 
+fit_nlsem <- em(nlsem_model_2, data = oneIntSorted, m = 16,
                 convergence = 1e-4, max.iter = 500, start = start)
 ```
 \normalsize
@@ -281,9 +296,9 @@ fit_nlsem <- em(nlsem_model_2, data = oneIntSorted,
 ```{r}
 summary(fit_nlsem)
 ```
-\
+\normalsize
 
-## Example: LMS approach, using `Mplus` (6.2 seconds)
+## Example: LMS approach, using `Mplus` (4.2 seconds)
 
 \scriptsize
 ```{r}
@@ -320,8 +335,6 @@ fit <- modsem(model, data = oneInt, method = "lms")
 summary(fit)
 ```
 \normalsize
-
-
 
 
 # Visualizing Interaction Effects
