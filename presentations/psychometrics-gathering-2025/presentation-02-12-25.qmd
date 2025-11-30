@@ -6,6 +6,9 @@ format:
     mathspec: true
     header-includes:
           - \usepackage{bm}
+    theme: default 
+    colortheme: dove
+    fonttheme: structuresmallcapsserif
 bibliography: references.bib
 ---
 
@@ -216,31 +219,31 @@ summary(fit)
     - Has both LMS and QML approaches.
 
 - Cons:
-    - Very slow
-    - Hard to use
+    - Very slow.
+    - Hard to use.
     - Only handles models with a single endogenous variable ($\eta$).
-    - Doesn't handle missing data
-    - Biased LMS standard errors
-    - Unstable estimates
-    - Cannot produce standardized estimates
-    - Virtually no fit measures
+    - Doesn't handle missing data.
+    - Biased LMS standard errors.
+    - Unstable estimates, sensitive to starting estimates.
+    - Cannot produce standardized estimates.
+    - Virtually no fit measures.
     - Does not handle linear and nonlinear constraints.
-    - Generally unpolished
+    - Generally unpolished.
 
 ## `Mplus`
 
 - Pros:
-    - Extended implementation of LMS approach (multiple endogenous variables, endogenous interactions)
-    - Integrates well with other `Mplus` features (e.g., Multilevel SEM)
-    - Handles three-way interaction terms
-    - Handles higher order models (and interactions)
-    - Easy to use
+    - Extended implementation of LMS approach (multiple endogenous variables, endogenous interactions).
+    - Integrates well with other `Mplus` features (e.g., Multilevel SEM).
+    - Handles three-way interaction terms.
+    - Handles higher order models (and interactions).
+    - Easy to use.
     - Full Information Maximum Likelihood (FIML) estimation.
     - Linear and nonlinear constraints.
 
 - Cons:
-    - Scales poorly with multiple interaction effects
-    - Does not include QML
+    - Scales poorly with multiple interaction effects.
+    - Does not include QML.
     - Proprietary (expensive) software package.
     - No Multigroup LMS.
 
@@ -251,15 +254,15 @@ summary(fit)
     - Extended implementation of LMS and QML approach (multiple endogenous variables, endogenous interactions).
     - Computational optimized implementation of LMS and QML approaches.
     - Better scaling in LMS approach, compared to `Mplus`.
-    - Handles higher order models (and interactions)
-    - Easy to use
+    - Handles higher order models (and interactions).
+    - Easy to use.
     - Full Information Maximum Likelihood (FIML) estimation.
     - Multigroup LMS and QML.
     - Linear and nonlinear constraints.
 - Cons:
     - Missing some advanced features available in `Mplus` (e.g., Multilevel SEM).
 
-## Example: LMS approach, using `nlsem` (213.2 seconds)
+## Example: LMS, `nlsem` (213.2 seconds)
 \scriptsize
 ```{r}
 library(nlsem)
@@ -284,13 +287,13 @@ specs[grepl("nu\\.(x|y)", specs$label), "class1"] <- NA
 
 nlsem_model_2 <- create_sem(specs)
 
-fit_nlsem <- em(nlsem_model_2, data = oneIntSorted, m = 16,
+fit_nlsem <- em(model = nlsem_model_2, data = oneIntSorted,
                 convergence = 1e-4, max.iter = 500, start = start)
 ```
 \normalsize
 
 
-## Example: LMS approach, using `nlsem` (213.2 seconds)
+## Example: LMS, `nlsem` (213.2 seconds)
 
 \scriptsize
 ```{r}
@@ -298,7 +301,7 @@ summary(fit_nlsem)
 ```
 \normalsize
 
-## Example: LMS approach, using `Mplus` (4.2 seconds)
+## Example: LMS, `Mplus` (4.2 seconds)
 
 \scriptsize
 ```{r}
@@ -317,7 +320,7 @@ summary(fit)
 ```
 \normalsize
 
-## Example: LMS approach, using `modsem` (1.2 seconds)
+## Example: LMS, `modsem` (1.2 seconds)
 
 \scriptsize
 ```{r}
