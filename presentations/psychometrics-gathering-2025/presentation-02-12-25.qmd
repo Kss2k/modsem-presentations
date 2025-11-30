@@ -90,7 +90,7 @@ summary.emEst <- function(model) {
 
 ## `modsem`
 
-- `modsem` is an `R` package for estimating latent interaction and quadratic effects, in *Structural Equation Models* (SEMs).
+- `modsem` is an `R` package for estimating latent interaction and quadratic effects in *Structural Equation Models* (SEMs).
 
 ## Frameworks
 
@@ -100,34 +100,30 @@ summary.emEst <- function(model) {
 # Product Indicator (PI) Approaches
 ## Product Indicator (PI) Approaches
 
-- First attempt at latent interaction in SEMs [@kenny_estimating_1984]
-- Creates product indicators, used as indicators for latent interaction terms.
-- Has traditionally required manual model specification, and manual construction
-  of product indicators.
-- Early approaches involved complicated model constraints.
-- Manual specification (partially) led to a continual simplification of constraints.
+- First attempt at latent interaction in SEMs [@kenny_estimating_1984].
+- Creates product indicators that serve as indicators for latent interaction terms.
+- Traditionally relies on manual model specification and construction of product indicators.
+- Early implementations required complicated model constraints.
+- Manual specification pressures have gradually simplified those constraints.
 
 ## Product Indicator (PI) Approaches (History)
 
-- Constrained Approach (orthogonal specification) [@kenny_estimating_1984]
-- Constrained Approach (oblique specification) [@joreskog_nonlinear_1996]
-- Constrained Approach (mean-centered indicators) [@algina_note_2001]
-- Unconstrained Approach (constrained latent mean) [@martin_effect_1999]
-- Resdiual Centering Approach (no constraints) [@little_merits_2006]
-- Double Centering Approach (no constraints) [@lin_structural_2010]
+- Constrained Approach (orthogonal specification) [@kenny_estimating_1984].
+- Constrained Approach (oblique specification) [@joreskog_nonlinear_1996].
+- Constrained Approach (mean-centered indicators) [@algina_note_2001].
+- Unconstrained Approach (constrained latent mean) [@martin_effect_1999].
+- Residual Centering Approach (no constraints) [@little_merits_2006].
+- Double Centering Approach (no constraints) [@lin_structural_2010].
 
 ## Product Indicator (PI) Approaches (Software)
 
-- `semTools` offers tools for creating the product indicators, but does not help
-  specify the model.
-- Thus the PI approaches largely require manual specification.
-- `modsem` automatically handles the creation of product indicators, and model
-  specification.
-- Model specification becomes exponentially more complicated for models with more
-  indicators, more interaction terms. Especially for the PI approaches with model
-  constraints.
+- `semTools` automates creation of product indicators, but leaves model specification to the user.
+- PI approaches therefore still involve error-prone manual setup.
+- `modsem` builds the product indicators and model specification automatically.
+- This automation is critical because PI model constraints become exponentially more complicated as
+  the number of indicators or interaction terms grows.
 
-## Example: Double Centering Approach, using `semTools`
+## Example: Double Centering, `semTools`
 \scriptsize
 
 ```{r}
@@ -158,7 +154,7 @@ model <- '
 ```
 \normalsize
 
-## Example: Double Centering Approach, using `semTools`
+## Example: Double Centering, `semTools`
 
 \scriptsize
 ```{r}
@@ -173,7 +169,7 @@ summary(fit)
 ```
 \normalsize
 
-## Example: Double Centering Approach, using `modsem`
+## Example: Double Centering, `modsem`
 
 \scriptsize
 ```{r}
@@ -198,24 +194,23 @@ summary(fit)
 # Distribution Analytic (DA) Approaches
 ## Distribution Analytic (DA) Approaches
 
-- Latent Moderated Structural Equations (LMS) Method, introduced by [@klein_maximum_2000].
-- Quasi Maximum Likelihood (QML) Method, introducted by [@klein_quasi-maximum_2007].
-- No formation of product indicators.
-- Non-normal distribution of $\mathbf{\eta}$ is explicityly modelled.
-- LMS and QML perform very similarily. But QML performs slightly better under
-  normality violations.
-- QML is less computationally intensive, with multiple moderators.
+- Latent Moderated Structural Equations (LMS) method introduced by [@klein_maximum_2000].
+- Quasi Maximum Likelihood (QML) method introduced by [@klein_quasi-maximum_2007].
+- Avoids creating product indicators.
+- Explicitly models the non-normal distribution of $\bm{\eta}$.
+- LMS and QML perform similarly, although QML is slightly more robust under normality violations.
+- QML scales better computationally when multiple moderators are involved.
 
 ## Distribution Analytic (DA) Approaches (Software)
 
 - `R` package `nlsem`.
-- `Mplus`
-- `modsem`
+- `Mplus`.
+- `modsem`.
 
 ## `nlsem`
 
 - Pros:
-    - Free open source `R` package.
+    - Free, open-source `R` package.
     - Has both LMS and QML approaches.
 
 - Cons:
@@ -227,19 +222,19 @@ summary(fit)
     - Unstable estimates, sensitive to starting estimates.
     - Cannot produce standardized estimates.
     - Virtually no fit measures.
-    - Does not handle linear and nonlinear constraints.
+    - Does not support linear and nonlinear constraints.
     - Generally unpolished.
 
 ## `Mplus`
 
 - Pros:
-    - Extended implementation of LMS approach (multiple endogenous variables, endogenous interactions).
-    - Integrates well with other `Mplus` features (e.g., Multilevel SEM).
-    - Handles three-way interaction terms.
-    - Handles higher order models (and interactions).
     - Easy to use.
-    - Full Information Maximum Likelihood (FIML) estimation.
-    - Linear and nonlinear constraints.
+    - Extended LMS implementation covering multiple endogenous variables and endogenous interactions.
+    - Integrates cleanly with other `Mplus` features (e.g., multilevel SEM).
+    - Handles three-way interactions and higher-order models.
+    - Straightforward user interface.
+    - Provides Full Information Maximum Likelihood (FIML) estimation.
+    - Supports linear and nonlinear constraints.
 
 - Cons:
     - Scales poorly with multiple interaction effects.
@@ -250,15 +245,15 @@ summary(fit)
 ## `modsem`
 
 - Pros:
-    - Free open source `R` package.
-    - Extended implementation of LMS and QML approach (multiple endogenous variables, endogenous interactions).
-    - Computational optimized implementation of LMS and QML approaches.
-    - Better scaling in LMS approach, compared to `Mplus`.
-    - Handles higher order models (and interactions).
+    - Free, open-source `R` package.
     - Easy to use.
-    - Full Information Maximum Likelihood (FIML) estimation.
-    - Multigroup LMS and QML.
-    - Linear and nonlinear constraints.
+    - Extended LMS and QML implementation (multiple endogenous variables, endogenous interactions).
+    - Computationally optimized LMS and QML estimation.
+    - Better LMS scaling relative to `Mplus`.
+    - Supports higher-order models and interactions.
+    - Provides Full Information Maximum Likelihood (FIML) estimation.
+    - Supports linear and nonlinear constraints.
+    - Offers multigroup LMS and QML.
 - Cons:
     - Missing some advanced features available in `Mplus` (e.g., Multilevel SEM).
 
@@ -485,4 +480,3 @@ plot_surface(x = "X", z = "Z", y = "Y", model = fit,
 
 \tiny
 ## References
-
