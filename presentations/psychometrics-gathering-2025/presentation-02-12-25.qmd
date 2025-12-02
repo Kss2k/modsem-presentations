@@ -1,6 +1,7 @@
 ---
 title: "`modsem`: An R Package for Estimating Latent Interactions and Quadratic Effects"
 author: "Kjell S Slupphaug"
+institute: "Norwegian University of Science and Technology (NTNU), Statistics Norway (SSB)."
 format:
   beamer:
     mathspec: true
@@ -91,6 +92,9 @@ summary.emEst <- function(model) {
 ## `modsem`
 
 - `modsem` is an `R` package for estimating latent interaction and quadratic effects in *Structural Equation Models* (SEMs).
+- Collection of approaches withing the Product Indicator (PI) and
+  Distribution Analytic (DA) frameworks.
+- Based on the `lavaan` package.
 
 ## Frameworks
 
@@ -106,6 +110,11 @@ summary.emEst <- function(model) {
 - Early implementations required complicated model constraints.
 - Manual specification pressures have gradually simplified those constraints.
 
+## Product Indicator (PI) Approaches
+
+![](images/elemIntModel.png){width=80%}
+
+
 ## Product Indicator (PI) Approaches (History)
 
 - Constrained Approach (orthogonal specification) [@kenny_estimating_1984].
@@ -119,9 +128,9 @@ summary.emEst <- function(model) {
 
 - `semTools` automates creation of product indicators, but leaves model specification to the user.
 - PI approaches therefore still involve error-prone manual setup.
-- `modsem` builds the product indicators and model specification automatically.
-- This automation is critical because PI model constraints become exponentially more complicated as
-  the number of indicators or interaction terms grows.
+- `modsem` creates the product indicators and model specification automatically.
+- The model specification becomes increasingly complex for larger models, and
+  more complicated model constraints.
 
 ## Example: Double Centering, `semTools`
 \scriptsize
@@ -197,6 +206,8 @@ summary(fit)
 - Latent Moderated Structural Equations (LMS) method introduced by [@klein_maximum_2000].
 - Quasi Maximum Likelihood (QML) method introduced by [@klein_quasi-maximum_2007].
 - Avoids creating product indicators.
+- Estimators in PI approaches (incorrectly) assume normally distributed interaction terms,
+- and latent endogenous variables $\bm{\eta}$.
 - Explicitly models the non-normal distribution of $\bm{\eta}$.
 - LMS and QML perform similarly, although QML is slightly more robust under normality violations.
 - QML scales better computationally when multiple moderators are involved.
@@ -228,25 +239,24 @@ summary(fit)
 ## `Mplus`
 
 - Pros:
-    - Easy to use.
+    - User friendly.
     - Extended LMS implementation covering multiple endogenous variables and endogenous interactions.
-    - Integrates cleanly with other `Mplus` features (e.g., multilevel SEM).
+    - Integrates with other `Mplus` features (e.g., multilevel SEM).
     - Handles three-way interactions and higher-order models.
-    - Straightforward user interface.
     - Provides Full Information Maximum Likelihood (FIML) estimation.
     - Supports linear and nonlinear constraints.
 
 - Cons:
+    - Proprietary (expensive) software package.
     - Scales poorly with multiple interaction effects.
     - Does not include QML.
-    - Proprietary (expensive) software package.
-    - No Multigroup LMS.
+    - No multigroup LMS.
 
 ## `modsem`
 
 - Pros:
     - Free, open-source `R` package.
-    - Easy to use.
+    - User friendly.
     - Extended LMS and QML implementation (multiple endogenous variables, endogenous interactions).
     - Computationally optimized LMS and QML estimation.
     - Better LMS scaling relative to `Mplus`.
@@ -255,7 +265,7 @@ summary(fit)
     - Supports linear and nonlinear constraints.
     - Offers multigroup LMS and QML.
 - Cons:
-    - Missing some advanced features available in `Mplus` (e.g., Multilevel SEM).
+    - Missing advanced features available in `Mplus` (e.g., multilevel SEM).
 
 ## Example: LMS, `nlsem` (213.2 seconds)
 \scriptsize
@@ -299,19 +309,33 @@ summary(fit_nlsem)
 ## Example: LMS, `Mplus` (4.2 seconds)
 
 \scriptsize
-```{r}
-model <- '
-# Measurement Model
-  X  =~ x1 + x2 + x3
-  Z  =~ z1 + z2 + z3
-  Y  =~ y1 + y2 + y3
+```{r, eval = FALSE}
+ANALYSIS:
+  ESTIMATOR = ML;
+  TYPE = RANDOM;
+  ALGORITHM = INTEGRATION;
 
-# Structural Model
-  Y ~ X + Z + X:Z
-'
+MODEL:
+  X BY x1-x3;
+  Z BY z1-z3;
+  Y BY y1-y3;
+  Y ON X Z XZ;
+  XZ | X XWITH Z;
+```
 
-fit <- modsem(model, data = oneInt, method = "mplus")
-summary(fit)
+```{r, echo = FALSE}
+mplus_output <- "
+MODEL RESULTS
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+ Y          ON
+    X                  0.673      0.031     21.674      0.000
+    Z                  0.569      0.030     18.723      0.000
+    XZ                 0.718      0.028     25.831      0.000
+"
+
+cat(mplus_output)
 ```
 \normalsize
 
